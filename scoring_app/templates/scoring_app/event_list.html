@@ -1,0 +1,70 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block title %}所有事件管理{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+    <div>
+        <h2 style="margin: 0; font-size: 2rem;">所有事件管理</h2>
+        <p style="color: var(--text-muted); margin: 0.5rem 0 0 0;">管理與查看所有已建立的事件及其統計結果。</p>
+    </div>
+    <a href="{% url 'setup_event' %}" class="btn btn-primary">
+        + 建立新事件
+    </a>
+</div>
+
+<div class="table-responsive" style="box-shadow: var(--shadow-sm); border: none;">
+    <table>
+        <thead>
+            <tr>
+                <th>名稱</th>
+                <th style="text-align: center;">進入代碼</th>
+                <th style="text-align: center;">建立日期</th>
+                <th style="text-align: center;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr onmouseover="this.style.backgroundColor='#F9FAFB'" onmouseout="this.style.backgroundColor='transparent'"
+                style="transition: var(--transition);">
+                <td style="font-weight: 600; color: var(--primary-dark);">{{ event.title }}</td>
+                <td style="text-align: center;">
+                    <code
+                        style="background: #EEF2FF; color: var(--primary-color); padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600;">{{ event.passcode }}</code>
+                </td>
+                <td style="text-align: center; color: var(--text-muted); font-size: 0.875rem;">
+                    {{ event.created_at|date:"Y-m-d H:i" }}
+                </td>
+                <td style="text-align: center;">
+                    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                        <a href="{% url 'event_dashboard' event.id %}" class="btn btn-outline"
+                            style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 12px;">管理面板</a>
+                        <a href="{% url 'event_results' event.id %}" class="btn btn-primary"
+                            style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 12px;">查看統計</a>
+                        <form method="post" action="{% url 'delete_event' event.id %}"
+                            onsubmit="return confirm('警告：確定要刪除事件「{{ event.title|escapejs }}」嗎？所有相關的評分紀錄也將被永久刪除且無法復原！');"
+                            style="margin: 0; padding: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline"
+                                style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 12px; color: #DC2626; border-color: #FECACA; background: #FEF2F2;"
+                                onmouseover="this.style.background='#FEE2E2'"
+                                onmouseout="this.style.background='#FEF2F2'">
+                                刪除
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 4rem; color: var(--text-muted);">目前尚無建立任何事件。</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top: 4rem; text-align: center;">
+    <a href="{% url 'home' %}" style="color: var(--text-muted); text-decoration: none;">← 返回首頁</a>
+</div>
+{% endblock %}

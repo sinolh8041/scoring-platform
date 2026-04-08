@@ -1,0 +1,22 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block title %}選擇委員身份{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 4rem auto; text-align: center;">
+    <h2 style="margin-bottom: 3rem;">選擇您的身份</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.25rem;">
+        {% for commissioner in commissioners %}
+        <a href="{% url 'scoring_matrix' commissioner.token %}" class="btn btn-outline" style="padding: 1.5rem; border-radius: 20px; font-size: 1.1rem; justify-content: space-between;">
+            <span>👤 {{ commissioner.name }}</span>
+            <span style="font-size: 0.9rem; opacity: 0.6;">開始評分 →</span>
+        </a>
+        {% endfor %}
+    </div>
+    
+    <div style="margin-top: 3rem;">
+        <p style="color: var(--text-muted); font-size: 0.85rem;">身份一旦選擇並提交評分，將無法再次修改。</p>
+    </div>
+</div>
+{% endblock %}

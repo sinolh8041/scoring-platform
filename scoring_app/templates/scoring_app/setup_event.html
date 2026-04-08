@@ -1,0 +1,201 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block title %}建立事件{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 0 auto;">
+    <h2 style="margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.5rem;">⚙️</span> 建立事件
+    </h2>
+
+    <form method="post" id="eventForm">
+        {% csrf_token %}
+
+        <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem;">基本資訊</h3>
+            <div class="form-group">
+                <label
+                    style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">名稱</label>
+                <input type="text" name="title" class="form-control" value="{{ title|default:'' }}"
+                    placeholder="例如：2026 部門簡報比賽" required>
+            </div>
+
+            <div class="form-group">
+                <label
+                    style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">描述 (選填)</label>
+                <textarea name="description" class="form-control" rows="3"
+                    placeholder="輸入關於此事件的背景資訊...">{{ description|default:'' }}</textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 1rem;">
+                <div class="form-group">
+                    <label
+                        style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">委員進入代碼</label>
+                    <input type="text" name="passcode" class="form-control" value="{{ passcode|default:'' }}"
+                        placeholder="例如：INNO2024" required>
+                </div>
+            </div>
+
+            <div
+                style="margin-top: 1rem; padding: 1rem; background: #F8FAFC; border-radius: 12px; border: 1px dashed #CBD5E1;">
+                <label style="display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" name="is_anonymous_results"
+                        style="width: 18px; height: 18px; margin-right: 0.75rem; accent-color: var(--primary-color);" {% if is_anonymous %}checked{% endif %}>
+                    <span style="font-weight: 500; color: var(--primary-dark);">統計與報表匿名顯示 (僅顯示「委員 1、委員 2...」)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem;">委員名單設計</h3>
+            <p style="font-size: 0.85rem; color: #64748B; margin-bottom: 1rem;">請填寫委員真實姓名或頭銜。若留空，系統將自動配置為「委員 1」、「委員 2」。
+            </p>
+            <div id="commissionersContainer">
+                {% if commissioner_names %}
+                {% for name in commissioner_names %}
+                <div class="comm-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" name="commissioner_name" class="form-control" value="{{ name }}"
+                        placeholder="例如：王大明" style="flex: 1; margin-bottom: 0;">
+                    <button type="button" class="btn btn-outline remove-comm"
+                        style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="comm-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" name="commissioner_name" class="form-control" placeholder="例如：王大明, 評審代表"
+                        style="flex: 1; margin-bottom: 0;">
+                    <button type="button" class="btn btn-outline remove-comm"
+                        style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+                </div>
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-outline" id="addComm"
+                style="width: 100%; border-style: dashed; margin-top: 0.5rem; color: var(--primary-color);">
+                + 新增委員
+            </button>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem;">評分項目設定 (1-6 項)</h3>
+            <div id="itemsContainer">
+                {% if items_data %}
+                {% for name, weight in items_data %}
+                <div class="item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" name="item_name" class="form-control" value="{{ name }}" required
+                        style="flex: 2; margin-bottom: 0;">
+                    <input type="number" name="item_weight" class="form-control" value="{{ weight }}" min="1" max="100"
+                        required style="flex: 1; margin-bottom: 0;">
+                    <button type="button" class="btn btn-outline remove-item"
+                        style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="item-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                    <input type="text" name="item_name" class="form-control" placeholder="項目名稱 (例如：技術純熟度)" required
+                        style="flex: 2; margin-bottom: 0;">
+                    <input type="number" name="item_weight" class="form-control" placeholder="權重 (%)" min="1" max="100"
+                        required style="flex: 1; margin-bottom: 0;">
+                    <button type="button" class="btn btn-outline remove-item"
+                        style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+                </div>
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-outline" id="addItem"
+                style="width: 100%; border-style: dashed; margin-top: 0.5rem;">
+                + 新增評分項目
+            </button>
+        </div>
+
+        <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 1.25rem;">參賽組別</h3>
+            <label
+                style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">組別名稱 (每行一個)</label>
+            <textarea name="team_names" class="form-control" rows="6" placeholder="第一組&#10;第二組" required>{{ team_names|default:'' }}</textarea>
+        </div>
+
+        <div style="text-align: right; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.1rem;">
+                完成設定並發布
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    const container = document.getElementById('itemsContainer');
+    const addButton = document.getElementById('addItem');
+
+    function attachRemoveEvent(btn) {
+        btn.addEventListener('click', () => {
+            if (container.querySelectorAll('.item-row').length > 1) {
+                btn.parentElement.remove();
+            } else {
+                alert('至少需要一個評分項目');
+            }
+        });
+    }
+
+    addButton.addEventListener('click', () => {
+        const rows = container.querySelectorAll('.item-row');
+        if (rows.length >= 6) {
+            alert('最多只能設定 6 個評分項目');
+            return;
+        }
+
+        const newRow = document.createElement('div');
+        newRow.className = 'item-row';
+        newRow.style.cssText = 'display: flex; gap: 1rem; margin-bottom: 1rem;';
+        newRow.innerHTML = `
+            <input type="text" name="item_name" class="form-control" placeholder="項目名稱" required style="flex: 2; margin-bottom: 0;">
+            <input type="number" name="item_weight" class="form-control" placeholder="權重 (%)" min="1" max="100" required style="flex: 1; margin-bottom: 0;">
+            <button type="button" class="btn btn-outline remove-item" style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+        `;
+        container.appendChild(newRow);
+        attachRemoveEvent(newRow.querySelector('.remove-item'));
+    });
+
+    document.getElementById('addComm').addEventListener('click', function () {
+        const container = document.getElementById('commissionersContainer');
+        const row = document.createElement('div');
+        row.className = 'comm-row';
+        row.style.cssText = 'display: flex; gap: 1rem; margin-bottom: 1rem;';
+        row.innerHTML = `
+            <input type="text" name="commissioner_name" class="form-control" placeholder="例如：王大明, 評審代表" style="flex: 1; margin-bottom: 0;">
+            <button type="button" class="btn btn-outline remove-comm" style="padding: 0 1.25rem; border-radius: 12px; height: 48px;">X</button>
+        `;
+        container.appendChild(row);
+        row.querySelector('.remove-comm').addEventListener('click', function () {
+            if (document.querySelectorAll('.comm-row').length > 1) {
+                row.remove();
+            } else {
+                alert('必須至少保留一位委員喔！');
+            }
+        });
+    });
+
+    const attachRemoveCommEvent = (btn) => {
+        btn.addEventListener('click', function () {
+            if (document.querySelectorAll('.comm-row').length > 1) {
+                this.closest('.comm-row').remove();
+            } else {
+                alert('必須至少保留一位委員喔！');
+            }
+        });
+    };
+
+    document.querySelectorAll('.remove-comm').forEach(attachRemoveCommEvent);
+
+    document.querySelectorAll('.remove-item').forEach(attachRemoveEvent);
+
+    document.getElementById('eventForm').addEventListener('submit', function (e) {
+        const weights = Array.from(document.getElementsByName('item_weight')).map(i => parseInt(i.value) || 0);
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        if (totalWeight !== 100) {
+            alert(`權重總和必須等於 100% (目前總和為：${totalWeight}%)`);
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

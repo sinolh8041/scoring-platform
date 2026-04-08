@@ -1,0 +1,28 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block title %}驗證代碼 - {{ event.title }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 5rem auto; text-align: center;">
+    <div style="font-size: 3rem; margin-bottom: 2rem;">🛡️</div>
+    <h2 style="margin-bottom: 1rem;">身分驗證</h2>
+    <p style="color: var(--text-muted); margin-bottom: 3rem;">請輸入進入代碼以開啟評分面板</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <input type="text" name="passcode" class="form-control" placeholder="請輸入進入代碼" required
+                style="text-align: center; font-size: 1.5rem; letter-spacing: 4px; padding: 1.25rem; border-radius: 20px;">
+        </div>
+        <button type="submit" class="btn btn-primary"
+            style="width: 100%; padding: 1.25rem; font-size: 1.1rem; border-radius: 20px;">
+            驗證並進入 🔑
+        </button>
+    </form>
+
+    <div style="margin-top: 3rem;">
+        <a href="{% url 'home' %}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">←
+            返回首頁</a>
+    </div>
+</div>
+{% endblock %}

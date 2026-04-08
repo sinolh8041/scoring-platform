@@ -1,0 +1,28 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 1rem;">
+    <h1 style="font-size: 3rem; margin-bottom: 1.5rem; letter-spacing: -1px;">評分工具</h1>
+    <p
+        style="font-size: 1.25rem; color: var(--text-muted); max-width: 600px; margin: 0 auto 3rem auto; line-height: 1.6;">
+        為序位法評分系統，確保過程透明、結果公正。
+    </p>
+
+    <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+        <a href="{% url 'setup_event' %}" class="btn btn-primary">
+            <span style="font-size: 1.1rem; margin-right: 0.5rem;">+</span> 建立事件
+        </a>
+    </div>
+
+    <div style="margin-top: 6rem; border-top: 1px solid #E5E7EB; padding-top: 4rem;">
+        <h3 style="margin-bottom: 1rem;">委員登入</h3>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">如果您是評選委員，請向管理者索取進入代碼或專屬連結。</p>
+
+        <div style="max-width: 400px; margin: 0 auto;">
+            <p style="font-size: 0.875rem; color: #9CA3AF; font-style: italic;">
+                ( 提示：通常可透過分享的專屬 URL 直接進入評分表 )
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'scoring_app/base.html' %}
+{% block title %}管理員登入{% endblock %}
+{% block content %}
+<div style="max-width: 400px; margin: 4rem auto; text-align: center;">
+    <div class="card" style="padding: 2.5rem; background: white; border: 1px solid #E5E7EB; border-radius: 20px; box-shadow: var(--shadow-md);">
+        <h2 style="margin-bottom: 2rem; color: var(--primary-dark);">🔒 管理員登入</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group" style="text-align: left;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">帳號</label>
+                <input type="text" name="username" class="form-control" placeholder="請輸入您的帳號" required>
+            </div>
+            <div class="form-group" style="text-align: left;">
+                <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted);">密碼</label>
+                <input type="password" name="password" class="form-control" placeholder="請輸入密碼" required>
+            </div>
+            {% if form.errors %}
+                <p style="color: #DC2626; font-size: 0.85rem; text-align: left;">❌ 帳號或密碼錯誤，請重試。</p>
+            {% endif %}
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 12px; margin-top: 1rem;">
+                安全登入
+            </button>
+            <input type="hidden" name="next" value="{{ next }}" />
+        </form>
+    </div>
+</div>
+{% endblock %}

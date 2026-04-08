@@ -1,0 +1,193 @@
+{% extends 'scoring_app/base.html' %}
+
+{% block title %}評分結果統計 - {{ event.title }}{% endblock %}
+
+{% block extra_style %}
+.rank-1 {
+background-color: #EEF2FF !important;
+border: 2px solid var(--primary-color) !important;
+}
+.badge-gold {
+background: #F59E0B;
+color: white;
+padding: 0.25rem 0.75rem;
+border-radius: 50px;
+font-size: 0.75rem;
+font-weight: 700;
+}
+{% endblock %}
+
+{% block content %}
+<div
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+        <h2 style="margin-bottom: 0.5rem;">評分結果統計</h2>
+        <p style="color: var(--text-muted); margin: 0;">項目：{{ event.title }}</p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+        {% if is_admin %}
+        <a href="{% url 'export_results_excel' event.id %}" class="btn btn-outline" style="border-color: #10B981; color: #059669;">
+            下載 Excel 報表
+        </a>
+        <a href="{% url 'event_dashboard' event.id %}" class="btn btn-primary"
+            style="background-color: var(--primary-dark);">
+            返回儀表板
+        </a>
+        {% else %}
+        <a href="{% url 'home' %}" class="btn btn-primary" style="background-color: var(--primary-dark);">
+            ← 返回首頁
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card"
+    style="background: white; border: 1px solid #E5E7EB; border-radius: 20px; padding: 0; overflow: hidden; margin-bottom: 4rem;">
+    <div style="padding: 1.5rem 2rem; border-bottom: 1px solid #F3F4F6; background: #F9FAFB;">
+        <h3 style="margin: 0; font-size: 1.1rem;">排名列表</h3>
+    </div>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 100px; text-align: center;">排名</th>
+                    <th>參賽組別</th>
+                    <th style="text-align: center;">序位總和</th>
+                    <th style="text-align: center;">平均加權得分</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for res in results %}
+                <tr {% if forloop.first %}class="rank-1" {% endif %}>
+                    <td style="text-align: center;">
+                        {% if forloop.first %}
+                        <span class="badge-gold">Best</span>
+                        {% else %}
+                        {{ forloop.counter }}
+                        {% endif %}
+                    </td>
+                    <td style="font-weight: 600;">{{ res.team.name }}</td>
+                    <td style="text-align: center;">{{ res.rank_sum }}</td>
+                    <td style="text-align: center; color: var(--primary-color); font-weight: 700;">{{ res.avg_score|stringformat:".2f" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 4rem; color: var(--text-muted);">目前尚無評分紀錄。</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if results %}
+<div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+    <div class="card" style="background: white; border: 1px solid #E5E7EB; border-radius: 20px;">
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 style="margin: 0; font-size: 1.1rem;">視覺化表現統計</h3>
+            <div id="chartTabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="updateChart('overall', this)"
+                    style="padding: 0.4rem 1rem; font-size: 0.85rem;">總計成績</button>
+                {% for comm in commissioners %}
+                <button class="btn btn-outline" onclick="updateChart('{{ comm.display_name }}', this)"
+                    style="padding: 0.4rem 1rem; font-size: 0.85rem;">{{ comm.display_name }}</button>
+                {% endfor %}
+            </div>
+        </div>
+        <div style="height: 400px; width: 100%;">
+            <canvas id="rankingChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 5rem; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 3rem;">
+    <p style="color: var(--text-muted); font-size: 0.9rem;">計算邏輯：優先比對「序位總和」(越低越好)，若相同則以「平均加權總分」(越高越好) 為勝。</p>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    {% if results %}
+    const chartData = {{ chart_data_json| safe }};
+    const ctx = document.getElementById('rankingChart').getContext('2d');
+    let rankingChart;
+
+    function renderChart(labels, rankData, scoreData, titleSuffix) {
+        if (rankingChart) {
+            rankingChart.destroy();
+        }
+        rankingChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '序位總和 ' + (titleSuffix === 'overall' ? '' : '(不適用單一委員)'),
+                        data: titleSuffix === 'overall' ? rankData : [],
+                        backgroundColor: 'rgba(91, 130, 246, 0.6)',
+                        borderColor: '#5B82F6',
+                        borderWidth: 2,
+                        borderRadius: 10,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: titleSuffix === 'overall' ? '平均得分' : '加權得分',
+                        data: scoreData,
+                        type: 'line',
+                        borderColor: '#2B3081',
+                        backgroundColor: '#2B3081',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        yAxisID: 'y1',
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        display: titleSuffix === 'overall',
+                        title: { display: true, text: '序位總和' }
+                    },
+                    y1: {
+                        beginAtZero: true,
+                        position: 'right',
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: '總分' }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateChart(viewType, btnElement) {
+        // Update active button styling
+        const buttons = document.querySelectorAll('#chartTabs button');
+        buttons.forEach(btn => {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline');
+        });
+        btnElement.classList.remove('btn-outline');
+        btnElement.classList.add('btn-primary');
+
+        if (viewType === 'overall') {
+            renderChart(chartData.labels, chartData.overall_ranks, chartData.overall_scores, 'overall');
+        } else {
+            renderChart(chartData.labels, null, chartData.comm_scores[viewType], viewType);
+        }
+    }
+
+    // Initialize with overall data
+    renderChart(chartData.labels, chartData.overall_ranks, chartData.overall_scores, 'overall');
+    {% endif %}
+</script>
+{% endblock %}

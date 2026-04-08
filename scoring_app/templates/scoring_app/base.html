@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}序位法評分平台{% endblock %}</title>
+    <!-- Poppins Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #5B82F6;
+            --primary-dark: #2B3081;
+            --bg-color: #F8FAFF;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: white;
+            padding: 1.25rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+            text-decoration: none;
+            letter-spacing: -0.5px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1100px;
+            margin: 3rem auto;
+            padding: 2.5rem;
+            background: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-md);
+        }
+
+        h1,
+        h2,
+        h3 {
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            /* Pill shape */
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(91, 130, 246, 0.3);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            border-radius: var(--border-radius-md);
+            border: 1px solid #E5E7EB;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: var(--transition);
+            background: #F9FAFB;
+            box-sizing: border-box;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(91, 130, 246, 0.1);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--border-radius-md);
+            border: 1px solid #E5E7EB;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #F9FAFB;
+            padding: 1.2rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        td {
+            padding: 1.25rem;
+            border-bottom: 1px solid #F3F4F6;
+        }
+
+        .card {
+            background: #F9FAFB;
+            padding: 1.5rem;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 1.5rem;
+        }
+
+            {
+            % block extra_style %
+        }
+
+            {
+            % endblock %
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="{% url 'home' %}" class="navbar-brand">🏆序位法評分工具</a>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            {% if user.is_authenticated %}
+            <span style="font-size: 0.85rem; color: var(--primary-dark); font-weight: 600; margin-right: 0.5rem;">👑 {{user.username }}</span>
+            <a href="{% url 'event_list' %}"
+                style="text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; display: flex; align-items: center; margin-right: 0.5rem;">管理所有事件</a>
+            <a href="{% url 'setup_event' %}" class="btn btn-primary"
+                style="padding: 0.5rem 1rem; font-size: 0.8rem;">建立事件</a>
+            <form method="post" action="{% url 'logout' %}" style="margin: 0; padding: 0; display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline"
+                    style="padding: 0.5rem 1rem; font-size: 0.8rem;">登出</button>
+            </form>
+            {% else %}
+            <a href="{% url 'login' %}"
+                style="text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; display: flex; align-items: center;">管理員登入</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="{% block container_class %}container{% endblock %} animate-up">
+        {% if messages %}
+        {% for message in messages %}
+        <div
+            style="padding: 1rem; background: #FEF2F2; color: #DC2626; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #FEE2E2;">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block extra_script %}{% endblock %}
+</body>
+
+</html>
