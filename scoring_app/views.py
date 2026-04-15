@@ -187,7 +187,8 @@ def event_results(request, event_id):
         rank_sum = TeamRankRecord.objects.filter(team=team).aggregate(Sum('rank'))['rank__sum'] or 0
         total_weighted_scores = []
         comm_details = {}
-        
+        comm_ranks = {}
+
         for comm in commissioners:
             comm_scores = ScoreRecord.objects.filter(commissioner=comm, team=team)
             weighted_sum = 0
@@ -196,14 +197,18 @@ def event_results(request, event_id):
                     weighted_sum += float(s.score) * (float(s.item.weight) / 100.0)
                 total_weighted_scores.append(weighted_sum)
             comm_details[comm.display_name] = weighted_sum
-            
+
+            rank_record = TeamRankRecord.objects.filter(commissioner=comm, team=team).first()
+            comm_ranks[comm.display_name] = rank_record.rank if rank_record else '—'
+
         avg_score = sum(total_weighted_scores) / len(total_weighted_scores) if total_weighted_scores else 0
-        
+
         results.append({
             'team': team,
             'rank_sum': rank_sum,
             'avg_score': avg_score,
-            'comm_details': comm_details
+            'comm_details': comm_details,
+            'comm_ranks': comm_ranks,
         })
     
     sorted_results = sorted(results, key=lambda x: (x['rank_sum'], -x['avg_score']))

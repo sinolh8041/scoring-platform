@@ -3,34 +3,73 @@
 {% block title %}評分結果統計 - {{ event.title }}{% endblock %}
 
 {% block extra_style %}
-.rank-1 {
-background-color: #EEF2FF !important;
-border: 2px solid var(--primary-color) !important;
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
 }
-.badge-gold {
-background: #F59E0B;
-color: white;
-padding: 0.25rem 0.75rem;
-border-radius: 50px;
-font-size: 0.75rem;
-font-weight: 700;
+.rank-1-badge { background: #F59E0B; color: white; }
+.rank-2-badge { background: #9CA3AF; color: white; }
+.rank-3-badge { background: #B45309; color: white; }
+.rank-other-badge { background: #EEF2FF; color: var(--primary-color); }
+.rank-1-row { background-color: #FFFBEB !important; }
+
+.section-card {
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 2.5rem;
 }
+.section-header {
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid #F3F4F6;
+    background: #F9FAFB;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.section-header h3 { margin: 0; font-size: 1.05rem; }
+.score-highlight { color: var(--primary-color); font-weight: 700; }
+
+.comm-tab-btn {
+    padding: 0.4rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: 50px;
+    border: 2px solid #E5E7EB;
+    background: white;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.comm-tab-btn:hover { border-color: var(--primary-color); color: var(--primary-color); }
+.comm-tab-btn.active { background: var(--primary-color); border-color: var(--primary-color); color: white; }
+
+.comm-panel { display: none; }
+.comm-panel.active { display: block; }
+
+th small { font-weight: 400; color: var(--text-muted); display: block; margin-top: 2px; }
 {% endblock %}
 
 {% block content %}
-<div
-    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; flex-wrap: wrap; gap: 1rem;">
     <div>
         <h2 style="margin-bottom: 0.5rem;">評分結果統計</h2>
         <p style="color: var(--text-muted); margin: 0;">項目：{{ event.title }}</p>
     </div>
-    <div style="display: flex; gap: 1rem;">
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
         {% if is_admin %}
         <a href="{% url 'export_results_excel' event.id %}" class="btn btn-outline" style="border-color: #10B981; color: #059669;">
             下載 Excel 報表
         </a>
-        <a href="{% url 'event_dashboard' event.id %}" class="btn btn-primary"
-            style="background-color: var(--primary-dark);">
+        <a href="{% url 'event_dashboard' event.id %}" class="btn btn-primary" style="background-color: var(--primary-dark);">
             返回儀表板
         </a>
         {% else %}
@@ -41,38 +80,51 @@ font-weight: 700;
     </div>
 </div>
 
-<div class="card"
-    style="background: white; border: 1px solid #E5E7EB; border-radius: 20px; padding: 0; overflow: hidden; margin-bottom: 4rem;">
-    <div style="padding: 1.5rem 2rem; border-bottom: 1px solid #F3F4F6; background: #F9FAFB;">
-        <h3 style="margin: 0; font-size: 1.1rem;">排名列表</h3>
+{# ── 表格一：總覽排名 ── #}
+<div class="section-card">
+    <div class="section-header">
+        <span style="font-size: 1.3rem;">🏆</span>
+        <h3>總覽排名</h3>
     </div>
     <div class="table-responsive">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 100px; text-align: center;">排名</th>
+                    <th style="width: 70px; text-align: center;">排名</th>
                     <th>參賽組別</th>
-                    <th style="text-align: center;">序位總和</th>
-                    <th style="text-align: center;">平均加權得分</th>
+                    <th style="text-align: center;">序位總和<small>越低越好</small></th>
+                    <th style="text-align: center;">平均加權得分<small>越高越好</small></th>
+                    {% for comm in commissioners %}
+                    <th style="text-align: center;">{{ comm.display_name }}<small>加權得分 / 給予序位</small></th>
+                    {% endfor %}
                 </tr>
             </thead>
             <tbody>
                 {% for res in results %}
-                <tr {% if forloop.first %}class="rank-1" {% endif %}>
+                <tr {% if forloop.first %}class="rank-1-row"{% endif %}>
                     <td style="text-align: center;">
-                        {% if forloop.first %}
-                        <span class="badge-gold">Best</span>
+                        {% if forloop.counter == 1 %}
+                            <span class="rank-badge rank-1-badge">1</span>
+                        {% elif forloop.counter == 2 %}
+                            <span class="rank-badge rank-2-badge">2</span>
+                        {% elif forloop.counter == 3 %}
+                            <span class="rank-badge rank-3-badge">3</span>
                         {% else %}
-                        {{ forloop.counter }}
+                            <span class="rank-badge rank-other-badge">{{ forloop.counter }}</span>
                         {% endif %}
                     </td>
                     <td style="font-weight: 600;">{{ res.team.name }}</td>
                     <td style="text-align: center;">{{ res.rank_sum }}</td>
-                    <td style="text-align: center; color: var(--primary-color); font-weight: 700;">{{ res.avg_score|stringformat:".2f" }}</td>
+                    <td style="text-align: center;" class="score-highlight">{{ res.avg_score|stringformat:".2f" }}</td>
+                    {% for comm in commissioners %}
+                    <td style="text-align: center; color: #374151;">
+                        {% for k, v in res.comm_details.items %}{% if k == comm.display_name %}{{ v|stringformat:".2f" }} / {% for rk, rv in res.comm_ranks.items %}{% if rk == comm.display_name %}{{ rv }}{% endif %}{% endfor %}{% endif %}{% endfor %}
+                    </td>
+                    {% endfor %}
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="4" style="text-align: center; padding: 4rem; color: var(--text-muted);">目前尚無評分紀錄。</td>
+                    <td colspan="100" style="text-align: center; padding: 4rem; color: var(--text-muted);">目前尚無評分紀錄。</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -80,114 +132,77 @@ font-weight: 700;
     </div>
 </div>
 
-{% if results %}
-<div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-    <div class="card" style="background: white; border: 1px solid #E5E7EB; border-radius: 20px;">
-        <div
-            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-            <h3 style="margin: 0; font-size: 1.1rem;">視覺化表現統計</h3>
-            <div id="chartTabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="updateChart('overall', this)"
-                    style="padding: 0.4rem 1rem; font-size: 0.85rem;">總計成績</button>
-                {% for comm in commissioners %}
-                <button class="btn btn-outline" onclick="updateChart('{{ comm.display_name }}', this)"
-                    style="padding: 0.4rem 1rem; font-size: 0.85rem;">{{ comm.display_name }}</button>
-                {% endfor %}
-            </div>
+{# ── 表格二：各委員評分明細（切換頁籤）── #}
+{% if results and commissioners %}
+<div class="section-card">
+    <div class="section-header">
+        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 150px;">
+            <span style="font-size: 1.3rem;">📋</span>
+            <h3>各委員評分明細</h3>
         </div>
-        <div style="height: 400px; width: 100%;">
-            <canvas id="rankingChart"></canvas>
+        <div id="commTabs" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            {% for comm in commissioners %}
+            <button class="comm-tab-btn {% if forloop.first %}active{% endif %}"
+                onclick="switchTab('panel-{{ forloop.counter }}', this)">
+                {{ comm.display_name }}
+            </button>
+            {% endfor %}
         </div>
     </div>
+
+    {% for comm in commissioners %}
+    <div id="panel-{{ forloop.counter }}" class="comm-panel {% if forloop.first %}active{% endif %}">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 70px; text-align: center;">順序</th>
+                        <th>參賽組別</th>
+                        <th style="text-align: center;">給予序位<small>委員排序</small></th>
+                        <th style="text-align: center;">加權總得分<small>依本委員</small></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in results %}
+                    <tr>
+                        <td style="text-align: center; color: var(--text-muted);">{{ forloop.counter }}</td>
+                        <td style="font-weight: 600;">{{ res.team.name }}</td>
+                        <td style="text-align: center; font-weight: 600;">
+                            {% with rank=res.comm_ranks|default_if_none:"—" %}
+                                {% for k, v in res.comm_ranks.items %}
+                                    {% if k == comm.display_name %}{{ v }}{% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                        </td>
+                        <td style="text-align: center;" class="score-highlight">
+                            {% for k, v in res.comm_details.items %}
+                                {% if k == comm.display_name %}{{ v|stringformat:".2f" }}{% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endif %}
 
-<div style="margin-top: 5rem; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 3rem;">
-    <p style="color: var(--text-muted); font-size: 0.9rem;">計算邏輯：優先比對「序位總和」(越低越好)，若相同則以「平均加權總分」(越高越好) 為勝。</p>
+<div style="margin-top: 3rem; text-align: center; border-top: 1px solid #E5E7EB; padding-top: 2rem;">
+    <p style="color: var(--text-muted); font-size: 0.9rem;">
+        計算邏輯：優先比對「序位總和」(越低越好)，若相同則以「平均加權總分」(越高越好) 為勝。
+    </p>
 </div>
 {% endblock %}
 
 {% block extra_script %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    {% if results %}
-    const chartData = {{ chart_data_json| safe }};
-    const ctx = document.getElementById('rankingChart').getContext('2d');
-    let rankingChart;
-
-    function renderChart(labels, rankData, scoreData, titleSuffix) {
-        if (rankingChart) {
-            rankingChart.destroy();
-        }
-        rankingChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: '序位總和 ' + (titleSuffix === 'overall' ? '' : '(不適用單一委員)'),
-                        data: titleSuffix === 'overall' ? rankData : [],
-                        backgroundColor: 'rgba(91, 130, 246, 0.6)',
-                        borderColor: '#5B82F6',
-                        borderWidth: 2,
-                        borderRadius: 10,
-                        yAxisID: 'y'
-                    },
-                    {
-                        label: titleSuffix === 'overall' ? '平均得分' : '加權得分',
-                        data: scoreData,
-                        type: 'line',
-                        borderColor: '#2B3081',
-                        backgroundColor: '#2B3081',
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        yAxisID: 'y1',
-                        tension: 0.3
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        display: titleSuffix === 'overall',
-                        title: { display: true, text: '序位總和' }
-                    },
-                    y1: {
-                        beginAtZero: true,
-                        position: 'right',
-                        grid: { drawOnChartArea: false },
-                        title: { display: true, text: '總分' }
-                    }
-                }
-            }
-        });
-    }
-
-    function updateChart(viewType, btnElement) {
-        // Update active button styling
-        const buttons = document.querySelectorAll('#chartTabs button');
-        buttons.forEach(btn => {
-            btn.classList.remove('btn-primary');
-            btn.classList.add('btn-outline');
-        });
-        btnElement.classList.remove('btn-outline');
-        btnElement.classList.add('btn-primary');
-
-        if (viewType === 'overall') {
-            renderChart(chartData.labels, chartData.overall_ranks, chartData.overall_scores, 'overall');
-        } else {
-            renderChart(chartData.labels, null, chartData.comm_scores[viewType], viewType);
-        }
-    }
-
-    // Initialize with overall data
-    renderChart(chartData.labels, chartData.overall_ranks, chartData.overall_scores, 'overall');
-    {% endif %}
+function switchTab(panelId, btn) {
+    document.querySelectorAll('.comm-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.comm-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+}
 </script>
 {% endblock %}
